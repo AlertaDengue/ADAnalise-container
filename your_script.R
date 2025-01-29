@@ -1,4 +1,3 @@
-
 library(ggplot2)
 
 #commandArgs picks up the variables you pass from the command line
