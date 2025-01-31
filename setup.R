@@ -15,7 +15,8 @@ cran <- c(
   "cgwtools",
   "fs",
   "miceadds",
-  "brpop"
+  "brpop",
+  "argparse"
 )
 
 install <- function(pkg) {
