@@ -17,7 +17,7 @@ ufs <- data.frame(
     "GO", "MT", "MS", "DF",
     "ES", "MG", "RJ", "SP",
     "PR", "RS", "SC"
-  ),
+  )
 )
 
 parser <- ArgumentParser()

@@ -10,17 +10,22 @@ cran <- c(
   "devtools",
   "lubridate",
   "grid",
-  "INLA",
   "parallel",
   "cgwtools",
   "fs",
-  "miceadds",
   "brpop",
-  "argparse"
+  "argparse",
+  "futile.logger",
+  "units",
+  "sf",
+  "fmesher",
+  "miceadds"
 )
 
+options(error = traceback)
+
 install <- function(pkg) {
-  if (!require(pkg, character.only = TRUE)) {
+  if (!nzchar(system.file(package = pkg))) {
     install.packages(pkg, dependencies = TRUE)
   }
 }
