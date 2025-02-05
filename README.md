@@ -12,7 +12,7 @@ See .env.tpl to check the required env variables in .env file
 
 ## Building the container
 ```bash
-docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t adanalise .
+docker build -t adanalise .
 ```
 
 ## Running the container (all UFs)

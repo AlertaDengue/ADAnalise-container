@@ -1,20 +1,5 @@
 FROM rocker/tidyverse:latest
 
-ARG UID=1000
-ARG GID=1000
-
-RUN if getent group $GID > /dev/null; then \
-  groupmod -n adanalise $(getent group $GID | cut -d: -f1); \
-  else \
-  groupadd -g $GID adanalise; \
-  fi && \
-  if getent passwd $UID > /dev/null; then \
-  usermod -l adanalise $(getent passwd $UID | cut -d: -f1) && \
-  usermod -g adanalise adanalise; \
-  else \
-  useradd -m -u $UID -g adanalise adanalise; \
-  fi
-
 RUN apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
   libssl-dev \
@@ -45,7 +30,6 @@ RUN apt-get update && apt-get install -y \
 RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> "${R_HOME}/etc/Rprofile.site"
 
 WORKDIR /app
-USER adanalise
 
 COPY setup.R ./
 RUN Rscript setup.R
