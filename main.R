@@ -1,8 +1,26 @@
-source("AlertaDengueAnalise/config/config_global_2020.R")
+pkgs <- c(
+  "foreign",
+  "tidyverse",
+  "forecast",
+  "RPostgreSQL",
+  "xtable",
+  "zoo",
+  "assertthat",
+  "DBI",
+  "futile.logger",
+  "lubridate",
+  "grid",
+  "INLA",
+  "cgwtools",
+  "fs",
+  "miceadds",
+  "AlertTools",
+  "parallel",
+  "argparse",
+  "httr"
+)
 
-library(argparse)
-library(RPostgres)
-library(httr)
+lapply(pkgs, library, character.only = TRUE, quietly = T)
 
 ufs <- data.frame(
   estado = c(
@@ -44,7 +62,6 @@ parser$add_argument(
 )
 
 uri <- parse_url(Sys.getenv("DB_URI"))
-print(uri)
 
 args <- parser$parse_args()
 
@@ -53,24 +70,28 @@ if (!is.null(args$uf)) {
 }
 
 disease <- args$disease
-epiweek <- args$epiweek
+epiweek <- as.numeric(args$epiweek)
 finalday <- seqSE(epiweek, epiweek)$Termino
-output_dir <- "./"
+output_dir <- "./output/"
+
+if (!dir.exists(paste0(output_dir, "sql/"))) {
+  dir.create(paste0(output_dir, "sql/"), recursive = TRUE)
+}
 
 if (!dir.exists(paste0(output_dir, epiweek))) {
   dir.create(paste0(output_dir, epiweek), recursive = TRUE)
 }
 
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = sub("^/", "", uri$path),
-  host = uri$hostname,
-  port = uri$port,
-  user = uri$username,
-  password = uri$password
-)
-
-t1 <- Sys.time()
+# con <- dbConnect(
+#   RPostgreSQL::PostgreSQL(),
+#   dbname = sub("^/", "", uri$path),
+#   host = uri$hostname,
+#   port = uri$port,
+#   user = uri$username,
+#   password = uri$password
+# )
+#
+# t1 <- Sys.time()
 # for (i in seq_len(nrow(ufs))) {
 #   print(i)
 #   estado <- ufs$estado[i]
@@ -99,54 +120,55 @@ t1 <- Sys.time()
 #
 #   save(res, file = paste0(output_dir, epiweek, "/", filename))
 # }
-t2 <- Sys.time()
-message(paste("total time was", t2 - t1))
+# t2 <- Sys.time()
+# message(paste("total time was", t2 - t1))
+#
+# dbDisconnect(con)
 
-dbDisconnect(con)
-#
-# file_paths <- fs::dir_ls(paste0(output_dir, epiweek, "/"))
-#
-# j <- 1
-# for (i in seq_along(file_paths)) {
-#   load.Rdata(file_paths[i], "res")
-#   assign(paste0("res", j), res)
-#   j <- j + 1
-#   load(file_paths[i])
-# }
-# rm(res)
-#
-# output_path <- paste0("AlertaDengueAnalise/main/sql/output_", disease, ".sql")
-#
-# lapply(seq_along(file_paths), function(j) {
-#   restab <- eval(parse(
-#     text = paste0("res", j, "[['restab.", disease, "']] %>% bind_rows()")
-#   ))
-#   data <- do.call(rbind, restab)
-#   data$casos_est_max[data$casos_est_max > 10000] <- NA
-#   summary(data)
-#   write_alerta(data, writetofile = TRUE, arq = output_path)
-# })
-#
-# ale_data <- list()
-#
-# for (i in seq_along(file_paths)) {
-#   data <- eval(parse(
-#     text = paste0(
-#       "transpose(res", i, "[['ale.", disease, "']])[[1]] %>% bind_rows()"
-#     )
-#   ))
-#   indices <- eval(parse(
-#     text = paste0(
-#       "transpose(res", i, "[['ale.", disease, "']])[[2]] %>% bind_rows()"
-#     )
-#   ))
-#   ale_data[[i]] <- cbind(data, indices)
-# }
-#
-# res <- do.call(rbind, ale_data)
-#
-# if (!dir.exists(paste0(output_dir, "BR"))) {
-#   dir.create(paste0(output_dir, "BR"))
-# }
-#
-# save(res, file = paste0(output_dir, "BR/ale-BR-", epiweek, ".RData"))
+file_paths <- fs::dir_ls(paste0(output_dir, epiweek, "/"))
+
+j <- 1
+for (i in seq_along(file_paths)) {
+  load.Rdata(file_paths[i], "res")
+  assign(paste0("res", j), res)
+  j <- j + 1
+  load(file_paths[i])
+}
+rm(res)
+
+output_path <- paste0(output_dir, "sql/output_", disease, ".sql")
+
+lapply(seq_along(file_paths), function(j) {
+  restab <- eval(parse(
+    text = paste0("res", j, "[['restab.", disease, "']] %>% bind_rows()")
+  ))
+  data <- do.call(rbind, restab)
+  print(data)
+  data$casos_est_max[data$casos_est_max > 10000] <- NA
+  summary(data)
+  write_alerta(data, writetofile = TRUE, arq = output_path)
+})
+
+ale_data <- list()
+
+for (i in seq_along(file_paths)) {
+  data <- eval(parse(
+    text = paste0(
+      "transpose(res", i, "[['ale.", disease, "']])[[1]] %>% bind_rows()"
+    )
+  ))
+  indices <- eval(parse(
+    text = paste0(
+      "transpose(res", i, "[['ale.", disease, "']])[[2]] %>% bind_rows()"
+    )
+  ))
+  ale_data[[i]] <- cbind(data, indices)
+}
+
+res <- do.call(rbind, ale_data)
+
+if (!dir.exists(paste0(output_dir, "BR"))) {
+  dir.create(paste0(output_dir, "BR"))
+}
+
+save(res, file = paste0(output_dir, "BR/ale-BR-", epiweek, ".RData"))

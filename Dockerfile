@@ -45,8 +45,6 @@ RUN R -e 'options(error = traceback); install.packages("INLA",repos=c(getOption(
 RUN R -e 'options(error = traceback); utils::install.packages("miceadds")'
 RUN R -e "options(error = traceback); remotes::install_github('inlabru-org/fmesher', ref = 'stable')"
 
-COPY AlertaDengueAnalise/ ./AlertaDengueAnalise/
-
 COPY main.R ./
 
 ENTRYPOINT ["Rscript", "main.R"]

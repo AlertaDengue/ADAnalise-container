@@ -1,14 +1,8 @@
 # r-script-container
 docker template to run R scripts
 
-## Install git submodules
-```sh
-git submodule update --init --recursive
-```
-
 ## Create & populate .env file
 See .env.tpl to check the required env variables in .env file
-
 
 ## Building the container
 ```bash
