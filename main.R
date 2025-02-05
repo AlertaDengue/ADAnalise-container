@@ -39,12 +39,12 @@ parser$add_argument(
   required = TRUE,
   help = "Epidemiological week. Format: YYYYWW"
 )
-parser$add_argument(
-  "--uri",
-  type = "character",
-  required = TRUE,
-  help = "Database URI"
-)
+
+uri <- Sys.getenv("DB_URI")
+
+if (uri == "") {
+  stop("Error: DB_URI environment variable is not set.")
+}
 
 args <- parser$parse_args()
 
@@ -57,19 +57,13 @@ epiweek <- args$epiweek
 finalday <- seqSE(epiweek, epiweek)$Termino
 output_dir <- "./"
 
-print(ufs)
-cat("Disease:", disease, "\n")
-cat("Epidemiological Week:", epiweek, "\n")
-cat("Final Day:", finalday, "\n")
-cat("Output Directory:", output_dir, "\n")
+if (!dir.exists(paste0(output_dir, epiweek))) {
+  dir.create(paste0(output_dir, epiweek), recursive = TRUE)
+}
 
-# if (!dir.exists(paste0(output_dir, epiweek))) {
-#   dir.create(paste0(output_dir, epiweek), recursive = TRUE)
-# }
-#
-# con <- dbConnect(Rpostgres::Postgres(), url = args$uri)
-#
-# t1 <- Sys.time()
+con <- dbConnect(Rpostgres::Postgres(), url = args$uri)
+
+t1 <- Sys.time()
 # for (i in seq_len(nrow(ufs))) {
 #   print(i)
 #   estado <- ufs$estado[i]
@@ -98,10 +92,10 @@ cat("Output Directory:", output_dir, "\n")
 #
 #   save(res, file = paste0(output_dir, epiweek, "/", filename))
 # }
-# t2 <- Sys.time()
-# message(paste("total time was", t2 - t1))
-#
-# dbDisconnect(con)
+t2 <- Sys.time()
+message(paste("total time was", t2 - t1))
+
+dbDisconnect(con)
 #
 # file_paths <- fs::dir_ls(paste0(output_dir, epiweek, "/"))
 #

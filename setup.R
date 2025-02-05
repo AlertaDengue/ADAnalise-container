@@ -19,7 +19,8 @@ cran <- c(
   "units",
   "sf",
   "fmesher",
-  "miceadds"
+  "miceadds",
+  "RPostgres"
 )
 
 options(error = traceback)
