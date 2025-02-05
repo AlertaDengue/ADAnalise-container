@@ -1,6 +1,8 @@
+source("AlertaDengueAnalise/config/config_global_2020.R")
+
 library(argparse)
 library(RPostgres)
-source("AlertaDengueAnalise/config/config_global_2020.R")
+library(httr)
 
 ufs <- data.frame(
   estado = c(
@@ -25,7 +27,8 @@ parser$add_argument(
   "--uf",
   choices = ufs$sigla,
   help = "Choose the UFs. Default to all UFs. Example: `--uf SP RJ MG`",
-  nargs = "+"
+  nargs = "+",
+  required = FALSE
 )
 parser$add_argument(
   "--disease",
@@ -40,11 +43,8 @@ parser$add_argument(
   help = "Epidemiological week. Format: YYYYWW"
 )
 
-uri <- Sys.getenv("DB_URI")
-
-if (uri == "") {
-  stop("Error: DB_URI environment variable is not set.")
-}
+uri <- parse_url(Sys.getenv("DB_URI"))
+print(uri)
 
 args <- parser$parse_args()
 
@@ -61,7 +61,14 @@ if (!dir.exists(paste0(output_dir, epiweek))) {
   dir.create(paste0(output_dir, epiweek), recursive = TRUE)
 }
 
-con <- dbConnect(Rpostgres::Postgres(), url = args$uri)
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = sub("^/", "", uri$path),
+  host = uri$hostname,
+  port = uri$port,
+  user = uri$username,
+  password = uri$password
+)
 
 t1 <- Sys.time()
 # for (i in seq_len(nrow(ufs))) {

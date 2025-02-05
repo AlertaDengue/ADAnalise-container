@@ -6,17 +6,16 @@ docker template to run R scripts
 git submodule update --init --recursive
 ```
 
+## Create & populate .env file
+See .env.tpl to check the required env variables in .env file
+
+
 ## Building the container
 ```bash
-docker build -t adanalise .
+docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t adanalise .
 ```
 
-## Running the container in an interactive terminal
+## Running the container (all UFs)
 ```bash
-docker run -v $(pwd):/app -it adanalise Rscript /app/your_script.R arg1 arg2 arg3
-```
-
-## Running the container without a terminal
-```bash
-docker run adanalise arg1 arg2 arg3
+docker run --env-file .env --network infodengue-dev_infodengue -i adanalise --epiweek 202022
 ```
