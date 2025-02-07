@@ -1,17 +1,14 @@
 # r-script-container
 docker template to run R scripts
 
+## Create & populate .env file
+See .env.tpl to check the required env variables in .env file
+
 ## Building the container
 ```bash
-docker build -t r-script-container .
+docker build -t adanalise .
 ```
 
-## Running the container in an interactive terminal
+## Running the container (all UFs)
 ```bash
-docker run -v $(pwd):/app -it r-script-container Rscript /app/your_script.R arg1 arg2 arg3
-```
-
-## Running the container without a terminal
-```bash
-docker run  r-script-container arg1 arg2 arg3
-```
+docker run --env-file .env --volume ./output:/app/output -i adanalise --disease dengue --epiweek 202501 # --uf RS SC PR

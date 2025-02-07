@@ -10,16 +10,23 @@ cran <- c(
   "devtools",
   "lubridate",
   "grid",
-  "INLA",
   "parallel",
   "cgwtools",
   "fs",
+  "brpop",
+  "argparse",
+  "futile.logger",
+  "units",
+  "sf",
+  "fmesher",
   "miceadds",
-  "brpop"
+  "RPostgres"
 )
 
+options(error = traceback)
+
 install <- function(pkg) {
-  if (!require(pkg, character.only = TRUE)) {
+  if (!nzchar(system.file(package = pkg))) {
     install.packages(pkg, dependencies = TRUE)
   }
 }
