@@ -11,5 +11,4 @@ docker build -t adanalise .
 
 ## Running the container (all UFs)
 ```bash
-docker run --env-file .env --network infodengue-dev_infodengue -i adanalise --epiweek 202022
-```
+docker run --env-file .env --volume ./output:/app/output -i adanalise --disease dengue --epiweek 202501 # --uf RS SC PR

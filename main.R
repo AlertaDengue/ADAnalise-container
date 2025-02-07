@@ -82,48 +82,47 @@ if (!dir.exists(paste0(output_dir, epiweek))) {
   dir.create(paste0(output_dir, epiweek), recursive = TRUE)
 }
 
-# con <- dbConnect(
-#   RPostgreSQL::PostgreSQL(),
-#   dbname = sub("^/", "", uri$path),
-#   host = uri$hostname,
-#   port = uri$port,
-#   user = uri$username,
-#   password = uri$password
-# )
-#
-# t1 <- Sys.time()
-# for (i in seq_len(nrow(ufs))) {
-#   print(i)
-#   estado <- ufs$estado[i]
-#
-#   cid10 <- list(dengue = "A90", chik = "A92", zika = "A92.8")
-#   filename <- paste0("ale-", ufs$sigla[i], "-", epiweek, ".RData")
-#   cities <- getCidades(uf = estado)[, "municipio_geocodigo"]
-#
-#   res <- list()
-#
-#   res[[paste0("ale.", disease)]] <- pipe_infodengue(
-#     cities,
-#     cid10 = cid10[[disease]],
-#     nowcasting = ifelse(disease == "dengue", "none", "bayesian"),
-#     finalday = finalday,
-#     narule = "arima",
-#     iniSE = 201001,
-#     dataini = "sinpri",
-#     completetail = 0
-#   )
-#
-#   res[[paste0("restab.", disease)]] <- tabela_historico(
-#     res[[paste0("ale.", disease)]],
-#     iniSE = epiweek - 100
-#   )
-#
-#   save(res, file = paste0(output_dir, epiweek, "/", filename))
-# }
-# t2 <- Sys.time()
-# message(paste("total time was", t2 - t1))
-#
-# dbDisconnect(con)
+con <- dbConnect(
+  RPostgreSQL::PostgreSQL(),
+  dbname = sub("^/", "", uri$path),
+  host = uri$hostname,
+  port = uri$port,
+  user = uri$username,
+  password = uri$password
+)
+
+t1 <- Sys.time()
+for (i in seq_len(nrow(ufs))) {
+  print(i)
+  estado <- ufs$estado[i]
+  cid10 <- list(dengue = "A90", chik = "A92", zika = "A92.8")
+  filename <- paste0("ale-", ufs$sigla[i], "-", epiweek, ".RData")
+  cities <- getCidades(uf = estado)[, "municipio_geocodigo"]
+
+  res <- list()
+
+  res[[paste0("ale.", disease)]] <- pipe_infodengue(
+    cities,
+    cid10 = cid10[[disease]],
+    nowcasting = ifelse(disease == "dengue", "none", "bayesian"),
+    finalday = finalday,
+    narule = "arima",
+    iniSE = 201001,
+    dataini = "sinpri",
+    completetail = 0
+  )
+
+  res[[paste0("restab.", disease)]] <- tabela_historico(
+    res[[paste0("ale.", disease)]],
+    iniSE = epiweek - 100
+  )
+
+  save(res, file = paste0(output_dir, epiweek, "/", filename))
+}
+t2 <- Sys.time()
+message(paste("total time was", t2 - t1))
+
+dbDisconnect(con)
 
 file_paths <- fs::dir_ls(paste0(output_dir, epiweek, "/"))
 
@@ -143,8 +142,16 @@ lapply(seq_along(file_paths), function(j) {
     text = paste0("res", j, "[['restab.", disease, "']] %>% bind_rows()")
   ))
   data <- do.call(rbind, restab)
-  print(data)
-  data$casos_est_max[data$casos_est_max > 10000] <- NA
+  data <- as.data.frame(t(data)) # FIX: t() is an workaround
+
+  if (!"casos_est_max" %in% names(data)) {
+    data$casos_est_max <- NA
+  }
+
+  if (is.numeric(data$casos_est_max)) {
+    data$casos_est_max[data$casos_est_max > 10000] <- NA
+  }
+
   summary(data)
   write_alerta(data, writetofile = TRUE, arq = output_path)
 })
