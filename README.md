@@ -11,4 +11,4 @@ docker build -t adanalise .
 
 ## Running the container (all UFs)
 ```bash
-docker run --env-file .env --volume ./output:/app/output -i adanalise --disease dengue --epiweek 202501 # --uf RS SC PR
+docker run --env-file .env --volume ./output:/app/output -i --user $(id -u):$(id -g) adanalise --disease dengue --epiweek 202501 # --uf RS SC PR
