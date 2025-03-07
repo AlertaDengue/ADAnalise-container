@@ -27,36 +27,36 @@ RUN apt-get update && apt-get install -y \
   libnlopt-dev \
   make
 
-RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> "${R_HOME}/etc/Rprofile.site"
+ARG UID=1000
+ARG GID=1000
+ENV R_LIBS_USER="/app/deps"
 
-RUN R -e "install.packages('pak')"
-RUN R -e "pak::pkg_install('ggplot2')"
-RUN R -e "pak::pkg_install('foreign')"
-RUN R -e "pak::pkg_install('tidyverse')"
-RUN R -e "pak::pkg_install('forecast')"
-RUN R -e "pak::pkg_install('RPostgreSQL')"
-RUN R -e "pak::pkg_install('xtable')"
-RUN R -e "pak::pkg_install('zoo')"
-RUN R -e "pak::pkg_install('assertthat')"
-RUN R -e "pak::pkg_install('DBI')"
-RUN R -e "pak::pkg_install('devtools')"
-RUN R -e "pak::pkg_install('lubridate')"
-RUN R -e "pak::pkg_install('cgwtools')"
-RUN R -e "pak::pkg_install('fs')"
-RUN R -e "pak::pkg_install('brpop')"
-RUN R -e "pak::pkg_install('argparse')"
-RUN R -e "pak::pkg_install('futile.logger')"
-RUN R -e "pak::pkg_install('units')"
-RUN R -e "pak::pkg_install('sf')"
-RUN R -e "pak::pkg_install('fmesher')"
-RUN R -e "pak::pkg_install('miceadds')"
-RUN R -e "pak::pkg_install('RPostgres')"
-RUN R -e "pak::pkg_install('INLA')"
-RUN R -e "pak::pkg_install('github::inlabru-org/fmesher')"
-RUN R -e "pak::pkg_install('github::AlertaDengue/AlertTools')"
+RUN mkdir -p $R_LIBS_USER && chown -R $UID:$GID /app
+
+USER $UID
+
+RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> ~/.Rprofile
+
+RUN R -e "install.packages('pak', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('ggplot2', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('foreign', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('tidyverse', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('cgwtools', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('fs', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('brpop', lib=Sys.getenv('R_LIBS_USER'))" 
+RUN R -e "pak::pkg_install('argparse', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('futile.logger', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('units', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('sf', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('fmesher', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('miceadds', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('RPostgres', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "install.packages('INLA',repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=TRUE, lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('github::inlabru-org/fmesher', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('github::AlertaDengue/AlertTools', lib=Sys.getenv('R_LIBS_USER'))"
 
 WORKDIR /app
 
-COPY main.R ./
+COPY --chown=$UID:$GID main.R ./
 
 ENTRYPOINT ["Rscript", "main.R"]

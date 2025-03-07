@@ -1,3 +1,5 @@
+.libPaths(Sys.getenv("R_LIBS_USER"))
+
 pkgs <- c(
   "foreign",
   "tidyverse",
@@ -20,7 +22,7 @@ pkgs <- c(
   "httr"
 )
 
-lapply(pkgs, library, character.only = TRUE, quietly = T)
+lapply(pkgs, library, character.only = TRUE, quietly = TRUE)
 
 ufs <- data.frame(
   estado = c(
@@ -93,7 +95,6 @@ con <- dbConnect(
 
 t1 <- Sys.time()
 for (i in seq_len(nrow(ufs))) {
-  print(i)
   estado <- ufs$estado[i]
   cid10 <- list(dengue = "A90", chik = "A92", zika = "A92.8")
   filename <- paste0("ale-", ufs$sigla[i], "-", epiweek, ".RData")
