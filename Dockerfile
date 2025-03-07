@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
   liblapack-dev \
   libatlas-base-dev \
   libnlopt-dev \
-  make
+  make && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG UID=1000
 ARG GID=1000
@@ -54,6 +54,10 @@ RUN R -e "pak::pkg_install('RPostgres', lib=Sys.getenv('R_LIBS_USER'))"
 RUN R -e "install.packages('INLA',repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=TRUE, lib=Sys.getenv('R_LIBS_USER'))"
 RUN R -e "pak::pkg_install('github::inlabru-org/fmesher', lib=Sys.getenv('R_LIBS_USER'))"
 RUN R -e "pak::pkg_install('github::AlertaDengue/AlertTools', lib=Sys.getenv('R_LIBS_USER'))"
+
+USER root
+RUN rm -rf /tmp/*
+USER $UID
 
 WORKDIR /app
 
