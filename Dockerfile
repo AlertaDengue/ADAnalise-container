@@ -25,26 +25,42 @@ RUN apt-get update && apt-get install -y \
   liblapack-dev \
   libatlas-base-dev \
   libnlopt-dev \
-  make
+  make && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> "${R_HOME}/etc/Rprofile.site"
+ARG UID=1000
+ARG GID=1000
+ENV R_LIBS_USER="/app/deps"
+
+RUN mkdir -p $R_LIBS_USER && chown -R $UID:$GID /app
+
+USER $UID
+
+RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> ~/.Rprofile
+
+RUN R -e "install.packages('pak', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('ggplot2', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('foreign', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('tidyverse', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('cgwtools', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('fs', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('brpop', lib=Sys.getenv('R_LIBS_USER'))" 
+RUN R -e "pak::pkg_install('argparse', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('futile.logger', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('units', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('sf', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('fmesher', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('miceadds', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('RPostgres', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "install.packages('INLA',repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=TRUE, lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('github::inlabru-org/fmesher', lib=Sys.getenv('R_LIBS_USER'))"
+RUN R -e "pak::pkg_install('github::AlertaDengue/AlertTools', lib=Sys.getenv('R_LIBS_USER'))"
+
+USER root
+RUN rm -rf /tmp/*
+USER $UID
 
 WORKDIR /app
 
-COPY setup.R ./
-RUN Rscript setup.R
-
-COPY dependencies.txt ./
-RUN R -e "options(error = traceback); install.packages(readLines('dependencies.txt'), repos='http://cran.rstudio.com/')"
-
-RUN R -e "options(error = traceback); install.packages('units', repos='https://cloud.r-project.org')"
-RUN R -e "options(error = traceback); install.packages('sf', repos='https://cloud.r-project.org')"
-
-RUN R -e 'options(error = traceback); install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)'
-
-RUN R -e 'options(error = traceback); utils::install.packages("miceadds")'
-RUN R -e "options(error = traceback); remotes::install_github('inlabru-org/fmesher', ref = 'stable')"
-
-COPY main.R ./
+COPY --chown=$UID:$GID main.R ./
 
 ENTRYPOINT ["Rscript", "main.R"]
